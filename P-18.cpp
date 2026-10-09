@@ -1,0 +1,35 @@
+#include <iostream>
+#include <cstring>
+#include <windows.h>
+
+using namespace std;
+
+int main() {
+    HANDLE hMap = CreateFileMappingA(
+        INVALID_HANDLE_VALUE, 
+        nullptr, 
+        PAGE_READWRITE, 
+        0, 
+        256, 
+        "Local\\MySharedMem"
+    );
+    
+    if (!hMap) {
+        cerr << "File mapping failed! Error: " << GetLastError() << "\n";
+        return 1;
+    }
+
+    char* pBuf = (char*)MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, 256);
+    if (!pBuf) {
+        cerr << "MapViewOfFile failed! Error: " << GetLastError() << "\n";
+        CloseHandle(hMap);
+        return 1;
+    }
+
+    strcpy_s(pBuf, 256, "Shared memory payload");
+    cout << "Data in shared region: " << pBuf << "\n";
+
+    UnmapViewOfFile(pBuf);
+    CloseHandle(hMap);
+    return 0;
+}
